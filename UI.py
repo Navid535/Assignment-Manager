@@ -19,14 +19,24 @@ from PySide6.QtWidgets import (
     QSpinBox,
 )
 
+
 def resource_path(relative_path):
-    try:
-        base_path = sys._MEIPASS
-    except Exception:
+    if hasattr(sys, "frozen") or "__compiled__" in globals():
+        base_path = os.path.dirname(sys.argv[0])
+    else:
         base_path = os.path.abspath(".")
 
-    return str(os.path.join(base_path, relative_path))
+    nuitka_path = os.path.join(os.path.dirname(__file__), relative_path)
+    if os.path.exists(nuitka_path):
+        return nuitka_path
 
+    return os.path.join(base_path, relative_path)
+
+def get_db_path():
+    app_data_path = os.path.expanduser("~/.local/share/AssignmentManager")
+    if not os.path.exists(app_data_path):
+        os.makedirs(app_data_path)
+    return os.path.join(app_data_path, "assignments.db")
 
 class AddDialog(QDialog):
     def __init__(self, parent=None):
@@ -281,7 +291,7 @@ class MainWindow(QMainWindow):
         if dlg.exec() == QDialog.Accepted:
             name, deadline, stars = dlg.get_data()
             try:
-                with AssignmentManager("assignments.db") as mgr:
+                with AssignmentManager(get_db_path()) as mgr:
                     mgr.add(name, deadline, stars)
                     self.refresh()
             except Exception as e:
@@ -290,7 +300,7 @@ class MainWindow(QMainWindow):
     def refresh(self, first_time=False):
         self.start_refresh_animation()
         try:
-            with AssignmentManager("assignments.db") as mgr:
+            with AssignmentManager(get_db_path()) as mgr:
                 all_assignments = mgr.get_all()
                 number_of_all = len(all_assignments)
 
@@ -368,7 +378,7 @@ class MainWindow(QMainWindow):
         if dlg.exec() == QDialog.Accepted:
             new_name, new_dl, new_strs = dlg.get_data()
             try:
-                with AssignmentManager("assignments.db") as mgr:
+                with AssignmentManager(get_db_path()) as mgr:
                     mgr.update_by_id(id, new_name, new_dl, new_strs)
                 self.table.clearSelection()
                 self._last_selected_row = None
@@ -396,7 +406,7 @@ class MainWindow(QMainWindow):
         )
 
         if reply == QMessageBox.Yes:
-            with AssignmentManager("assignments.db") as mgr:
+            with AssignmentManager(get_db_path()) as mgr:
                 mgr.delete_by_id(ass_id)
             self.refresh()
             self._last_selected_row = None
