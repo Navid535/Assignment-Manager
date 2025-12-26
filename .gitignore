@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.idea/
+
+# Nuitka/PyInstaller build folders
+*.build/
+*.dist/
+*.bin
+*.exe
+UI.onefile-build/
